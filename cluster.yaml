@@ -1,0 +1,21 @@
+__default__:
+  queue: "slst_pub"
+  nodes: 1
+  ppn: 20
+  walltime: "50:00:00"  # 默认的最大运行时间，根据需要调整
+  #mem: "4G"  # 默认内存，根据需要调整
+  shell: "/bin/bash"
+  join_output: true
+  log_file: "wgbs_pbs_output.log"
+
+# 如果有特定规则需要不同的配置，可以在这里定义
+# 例如：
+# rule_name:
+#   queue: "another_queue"
+#   nodes: 2
+#   ppn: 16
+#   walltime: "02:00:00"
+#   mem: "8G"
+#   shell: "/bin/bash"
+#   join_output: false
+#   log_file: "another_log_file.log"

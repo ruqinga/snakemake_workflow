@@ -1,16 +1,6 @@
 fq_dir: ""
 work_dir: ""
 
-# pbs Configuration
-job:
-  name: "wgbs.pbs"
-  nodes: 1
-  ppn: 20
-  shell: "/bin/bash"
-  join_output: true
-  queue: "slst_pub"
-  log_file: "wgbs_pbs_output.log"
-
 # Input Reads
 reads:
   - read1: ""  # Provide read1 file path
