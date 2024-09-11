@@ -1,35 +1,55 @@
+# zhenglab 使用的wgbs试剂盒会额外添加一个index，需要在trim之后再删除这个index
 rule cut:
     input:
-        trimmed_read1 = lambda wildcards: f"{config['trim_out']}/{wildcards.sample}_1_val_1.fq.gz",
-        trimmed_read2 = lambda wildcards: f"{config['trim_out']}/{wildcards.sample}_2_val_2.fq.gz"
+        trimmed_read = get_trimmed_list
     output:
-        cutted_read1 = "{cut_out}/{sample}_1.fq.gz",
-        cutted_read2 = "{cut_out}/{sample}_2.fq.gz"
+        cutted_read = (
+            "{cut_out}/{sample}.fq.gz"
+            if config["dt"] == "SE"
+            else [
+                "{cut_out}/{sample}_1.fq.gz",
+                "{cut_out}/{sample}_2.fq.gz"
+            ]
+        )
+    conda:
+        config["conda_env"]
+    group: "processing_group"
     params:
-        cutadapt_params = config["cutadapt_params"],
-        cut_out = config["cut_out"]
+        options_pe = config["cutadapt"]["pe"],
+        options_se = config["cutadapt"]["se"],
+        cut_out = directories["cut_out"]
     shell:
         """
-        cutadapt {params.cutadapt_params} -o {output.cutted_read1} -p {output.cutted_read2} {input.trimmed_read1} {input.trimmed_read2}
+        if [ "{config[dt]}" == "SE" ]; then
+            cutadapt {params.options_se} -o {output.cutted_read} {input.trimmed_read}
+        else
+            cutadapt {params.options_pe} -o {output.cutted_read[0]} -p {output.cutted_read[1]} {input.trimmed_read[0]} {input.trimmed_read[1]}
+        fi
         """
 
 rule bismark:
     input:
-        cutted_read1 = lambda wildcards: f"{config['cut_out']}/{wildcards.sample}_1.fq.gz",
-        cutted_read2 = lambda wildcards: f"{config['cut_out']}/{wildcards.sample}_2.fq.gz"
+        cutted_read = get_cutted_list
     output:
-        bam = "{bis_out}/{sample}_bismark_bt2_pe.bam"
+        bam = (
+            "{bis_out}/{sample}_trimmed_bismark_bt2_se.bam"
+            if config["dt"] == "SE"
+            else [
+                "{bis_out}/{sample}_1_val_1_bismark_bt2_pe.bam"
+            ]
+        )
+    conda:
+        config["conda_env"]
+    group: "processing_group"
     params:
         genome = config["bismark_index"],
-        bis_out = config["directories"]["bis_out"],
+        bis_out = directories["bis_out"],
         strategy = config["strategy"]
     shell:
         """
-        if [ "{params.strategy}" = "WGBS" ]; then
-            echo "bismark wgbs"
-            bismark --genome {params.genome} -1 {input.cutted_read1} -2 {input.cutted_read2} -o {params.bis_out}
-        elif [ "{params.strategy}" = "PBAT" ]; then
-            echo "bismark pbat"
-            bismark --pbat --genome {params.genome} -1 {input.cutted_read1} -2 {input.cutted_read2} -o {params.bis_out}
+        if [ "{config[dt]}" == "SE" ]; then
+            bismark {params.option} --genome {params.genome} {input.cutted_read} -o {params.bis_out}
+        else
+            bismark {params.option} --genome {params.genome} -1 {input.cutted_read[0]} -2 {input.cutted_read[1]} -o {params.bis_out}
         fi
         """

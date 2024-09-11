@@ -1,14 +1,27 @@
 
 rule extract_methylation:
     input:
-        deduplicated_bam = lambda wildcards: f"{config['dedu_out']}/{wildcards.sample}_bismark_bt2_pe.deduplicated.bam"
+        deduplicated_bam = get_dedu_out
     output:
-        cytosine_report = "{extract_out}/{sample}/{sample}_bismark_bt2_pe.deduplicated.bedGraph.gz"
+        cytosine_report = (
+            "{extract_out}/{sample}/{sample}_trimmed_bismark_bt2_se.deduplicated.bedGraph.gz"
+            if config["dt"] == "SE"
+            else
+                "{extract_out}/{sample}/{sample}_1_val_1_bismark_bt2_pe.deduplicated.bedGraph.gz"
+        )
+    conda:
+        config["conda_env"]
+    group: "processing_group"
     params:
-        genome_folder = config["bismark_index"],
-        extract_out = config["extract_out"],
-        output_folder="{extract_out}/{sample}"
+        genome_folder = config["bismark"]["index"],
+        extract_out = directories["extract_out"],
+        output_folder = "{extract_out}/{sample}",
+        option = config["bis_extractor"]["params"]
     shell:
         """
-        bismark_methylation_extractor --paired-end --gzip --bedGraph --counts --report --comprehensive --cytosine_report --genome_folder {params.genome_folder} {input.deduplicated_bam} -o {params.output_folder}
+        if [ "{config[dt]}" == "SE" ]; then
+            bismark_methylation_extractor {params.option} --genome_folder {params.genome_folder} {input.deduplicated_bam} -o {params.output_folder}
+        else
+            bismark_methylation_extractor --paired-end {params.option} --genome_folder {params.genome_folder} {input.deduplicated_bam} -o {params.output_folder}
+        fi
         """

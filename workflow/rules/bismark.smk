@@ -1,21 +1,27 @@
 
 rule bismark:
     input:
-        trimmed_read1=lambda wildcards: f"{config['trim_out']}/{wildcards.sample}_1_val_1.fq.gz",
-        trimmed_read2=lambda wildcards: f"{config['trim_out']}/{wildcards.sample}_2_val_2.fq.gz"
+        trimmed_read = get_trimmed_list
     output:
-        bam = "{bis_out}/{sample}_bismark_bt2_pe.bam"
+        bam = (
+            "{bis_out}/{sample}_trimmed_bismark_bt2_se.bam"
+            if config["dt"] == "SE"
+            else [
+                "{bis_out}/{sample}_1_val_1_bismark_bt2_pe.bam"
+            ]
+        )
+    conda:
+        config["conda_env"]
+    group: "processing_group"
     params:
-        genome = config["bismark_index"],
-        bis_out = config["bis_out"],
-        strategy = config["strategy"]
+        option = config["bismark"]["params"],
+        genome = config["bismark"]["index"],
+        bis_out = directories["bis_out"]
     shell:
         """
-        if [ "{params.strategy}" = "WGBS" ]; then
-            echo "bismark wgbs"
-            bismark --genome {params.genome} -1 {input.trimmed_read1} -2 {input.trimmed_read1} -o {params.bis_out}
-        elif [ "{params.strategy}" = "PBAT" ]; then
-            echo "bismark pbat"
-            bismark --pbat --genome {params.genome} -1 {input.trimmed_read1} -2 {input.trimmed_read1} -o {params.bis_out}
+        if [ "{config[dt]}" == "SE" ]; then
+            bismark {params.option} --genome {params.genome} {input.trimmed_read} -o {params.bis_out}
+        else
+            bismark {params.option} --genome {params.genome} -1 {input.trimmed_read[0]} -2 {input.trimmed_read[1]} -o {params.bis_out}
         fi
         """

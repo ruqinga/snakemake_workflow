@@ -1,10 +1,18 @@
 rule deduplicate_bismark:
     input:
-        bam = lambda wildcards: f"{config['bis_out']}/{wildcards.sample}_bismark_bt2_pe.bam"
+        bam = get_bismark_out
     output:
-        deduplicated_bam="{dedu_out}/{sample}_bismark_bt2_pe.deduplicated.bam"
+        deduplicated_bam = (
+            "{dedu_out}/{sample}_trimmed_bismark_bt2_se.deduplicated.bam"
+            if config["dt"] == "SE"
+            else
+            "{dedu_out}/{sample}_1_val_1_bismark_bt2_pe.deduplicated.bam"
+        )
+    conda:
+        config["conda_env"]
+    group: "processing_group"
     params:
-        dedu_out=config["dedu_out"]
+        dedu_out = directories["dedu_out"]
     shell:
         """
         deduplicate_bismark --bam {input.bam} --output_dir {params.dedu_out}
