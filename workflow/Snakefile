@@ -4,23 +4,20 @@ include: "rules/common.smk"
 
 # 获取全局参数
 directories = get_directories(config)
-reads = config["reads"]
-samples = set(get_sample_name(read["read1"]) for read in reads)
 
 rule all:
-    input: get_all(samples, directories)
+    input: get_all(directories, config)
 
 # load rules
-# Check if 'sra' and 'srrid' exist in the config
-if "sra" in config and "srrid" in config["sra"]:
+if config["process"] == "download_sra":
     include: "rules/download_sra.smk"
-
-# Check if 'sra' and 'rename' exist in the config
-if "sra" in config and "rename" in config["sra"]:
+elif config["process"] == "sra2fq":
+    samples = {sample["srrid"]: sample["rename"] for sample in config["sra"]}
     include: "rules/convert_sra2fq.smk"
+elif config["process"] == "wgbs":
+    include: "rules/trim.smk"
+    include: "rules/bismark.smk"
+    #include: "rules/cut_bismark.smk"
+    include: "rules/deduplicate.smk"
+    include: "rules/extract.smk"
 
-include: "rules/trim.smk"
-include: "rules/bismark.smk"
-#include: "rules/cut_bismark.smk"
-include: "rules/deduplicate.smk"
-include: "rules/extract.smk"

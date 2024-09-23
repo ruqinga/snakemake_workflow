@@ -2,8 +2,9 @@ rule download_sra:
     output:
         sra_file="{sra_dir}/{srr}/{srr}.sra"
     params:
-        srr = config["srrid"],
-        expected_md5 = config["expected_md5"],
+        srrid = lambda wildcards: wildcards.srr, # Directly using wildcards for srrid
+        expected_md5 = lambda wildcards: next(
+            entry['expected_md5'] for entry in config['sra'] if entry['srrid'] == wildcards.srr),
         sra_dir = directories["sra_dir"]
     shell:
         """
@@ -11,9 +12,9 @@ rule download_sra:
         cd {params.sra_dir} 
 
         # 使用 prefetch 下载 SRA 文件
-        echo -e "\\nDownloading Sra: {params.srr}"
-        prefetch --max-size 50G {params.srr} || {{ echo "prefetch 下载失败"; exit 1; }}
-        local sra_file="{params.sra_dir}/{params.srr}/{params.srr}.sra"
+        echo -e "\\nDownloading Sra: {params.srrid}"
+        prefetch --progress --max-size 50G {params.srrid} || {{ echo "prefetch 下载失败"; exit 1; }}
+        sra_file="{params.sra_dir}/{params.srrid}/{params.srrid}.sra"
 
         # MD5 校验
         calculated_md5=$(md5sum {output} | awk '{{print $1}}')

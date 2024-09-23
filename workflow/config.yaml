@@ -3,11 +3,14 @@ work_dir: "/home_data/home/slst/leixy2023/snakemake/result"
 
 # Input Reads
 dt: "PE" # datatype = SE or PE
-# sra 通过命令行提供
+
+process: "download_sra" # download_sra or sra2fq or wgbs
+
 #sra:
 #  - srrid: ""
 #    expected_md5: ""
 #    rename: ""
+
 reads:
   - read1: "~/snakemake/rawdata/3ABCKO_1.fastq.gz"  # Provide read1 file path
     read2: "~/snakemake/rawdata/3ABCKO_2.fastq.gz"  # Provide read2 file path if PE, else leave empty
