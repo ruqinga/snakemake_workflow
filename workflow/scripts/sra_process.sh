@@ -1,78 +1,49 @@
-sra_dir="${work_dir}/sra"
+work_dir=""
 fq_dir="${work_dir}/rawdata"
 
-sra_download(){
-    local srrid=$1
-    local expected_md5=$2
-    local rename=$3
+# sra down
+metadata=""
 
-    # 切换到目标目录
-    cd "$sra_dir" || { echo "无法切换到目录 $sra_dir"; return 1; }
+export work_dir fq_dir metadata
 
-    # 使用 prefetch 下载 SRA 文件
-    echo -e "\nDownloading Sra: $srrid"
-    prefetch --max-size 50G "$srrid" || { echo "prefetch 下载失败"; return 1; }
-    local sra_file="${sra_dir}/${srrid}/${srrid}.sra"
+# 使用方法
+source ~/.bashrc
+conda activate snakemake_env
 
-    # MD5 校验
-    calculated_md5=$(md5sum "$sra_file" | awk '{print $1}')
-    if [[ $calculated_md5 != $expected_md5 ]]; then
-        echo "MD5 校验不匹配，下载可能出错。"
-        return 1
-    fi
-    echo "MD5 校验通过。"
+sra_download_convert(){
+    local srrid="$1"
+    local expected_md5="$2"
+    local rename="$3"
+    local strategy="$4"
 
-    # 重命名 SRA 文件
-    mv "${sra_dir}/${srrid}/${srrid}.sra" "${sra_dir}/${rename}/${rename}.sra"
-    echo "重命名成功"
+    # download
+    snakemake --config process="download_sra" sra="[{'srrid': '${srrid}', 'expected_md5': '${expected_md5}'}]"
 
+    # convert to fq.gz
+    # 在 cluster 上运行
+    snakemake --executor cluster-generic \
+        --cluster-generic-submit-cmd 'qsub -q slst_pub -N convert_sra2fq.pbs -l nodes=1:ppn=10' \
+        --latency-wait 60 \
+        --jobs 2 \
+        --use-conda \
+        --config process="sra2fq" sra="[{'sraid': '${srrid}', 'rename': '${rename}'}]" work_dir="${work_dir}" fq_dir="${fq_dir}"
 }
 
-sra_process() {
-  local srrid=$1
-  local expected_md5=$2
-  local rename=$3
-  local strategy=$4
+process_fq(){
+    local dt="$1"
+    local read1="$2"
+    local read2="$3"
 
-  # download sra
-  sra_download $srrid $expected_md5 $rename
-
-  # 解压为 FASTQ 格式
-  fasterq-dump --threads 10 --split-3 --outfile "${fq_dir}/${rename}.fastq" "${sra_dir}/${rename}/${rename}.sra"
-  echo "文件 "${sra_dir}/${rename}/${rename}.sra" 解压成功。"
-
-  # 统计解压后的文件数量
-  local file_count
-  file_count=$(ls "${fq_dir}/${rename}"*.fastq 2>/dev/null | wc -l)
-
-  if [[ $file_count -eq 2 ]]; then
-      echo "双端数据"
-
-      # 压缩
-      pigz -p 20 "${fq_dir}/${rename}_1.fastq"
-      pigz -p 20 "${fq_dir}/${rename}_2.fastq"
-
-      read1="${fq_dir}/${rename}_1.fastq.gz"
-      read2="${fq_dir}/${rename}_2.fastq.gz"
-
-      # 提交pbs任务
-      my_qsub "${strategy}" "${read1}" "${read2}"
-
-  elif [[ $file_count -eq 1 ]]; then
-      echo "单端数据"
-
-      # 压缩
-      pigz -p 20 "${fq_dir}/${rename}.fastq"
-
-      read1="${fq_dir}/${rename}_1.fastq.gz"
-
-      # 提交pbs任务
-      snakemake -s Snakefile --configfile config.yaml  strategy read1
-      my_qsub "${strategy}" "${read1}"
-
-  else
-      echo "未检测到 FASTQ 文件。"
-      exit 1
-  fi
-
+    # process wgbs or pbst
+    snakemake --forcerun all \
+        --executor cluster-generic \
+        --cluster-generic-submit-cmd 'qsub -q slst_pub -N wgbs.pbs -l nodes=1:ppn=10 -o ~/snakemake/logs/{wildcards.sample}.out -e ~/snakemake/logs/{wildcards.sample}.err' \
+        --latency-wait 60 \
+        --jobs 2 \
+        --use-conda \
+        --group-components processing_group=8 \
+        --config reads="[{'read1': '${read1}', 'read2': '${read2}'}]" dt="${dt}" work_dir="${work_dir}" fq_dir="${fq_dir}"
 }
+
+parallel --header : --colsep '\t' --link sra_download_convert {srrid} {md5} {sample_title} {strategy} :::: "${metadata}"
+parallel --colsep '\t' --link process_fq {1} {2} {3} :::: "${fq_dir}/fq_list.txt"
