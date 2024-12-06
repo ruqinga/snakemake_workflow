@@ -1,6 +1,6 @@
 #!/bin/bash
 # download_sra.sh: 用于处理单端和双端数据并调用 Snakemake 运行流程
-# 用法: bash download_sra.sh <work_dir> <fq_dir>
+# 用法: bash download_sra.sh <work_dir> <fq_dir> [-y]
 
 # 默认工作目录为上一级目录
 work_dir="${1:-../}"
@@ -64,10 +64,10 @@ if [[ -n "$json_output_se" ]]; then
 fi
 
 # 提示是否确认实际执行任务
-read -p "是否确认执行任务（实际提交作业）？(y/n): " confirm_run
-if [[ "$confirm_run" != "y" && "$confirm_run" != "Y" ]]; then
-    echo "任务已取消！"
-    exit 0
+if [[ "$3" == "-y" ]]; then
+    confirm_run="y"
+else
+    read -p "是否确认执行任务（实际提交作业）？(y/n): " confirm_run
 fi
 
 # 实际运行 Snakemake 工作流
