@@ -1,4 +1,3 @@
-
 rule bismark:
     input:
         trimmed_read = get_trimmed_list

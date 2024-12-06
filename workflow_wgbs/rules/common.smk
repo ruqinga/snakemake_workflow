@@ -3,19 +3,20 @@ def get_directories(config):
     根据配置文件中的 work_dir 和目录结构返回所有目录的路径。
     """
     work_dir = config["work_dir"]
-
-    # 拼接路径
     directories = {
         key: value.format(work_dir=work_dir) if "{work_dir}" in value else value
         for key, value in config["directories"].items()
     }
-
+    # 打印调试信息
+    print(f"Resolved directories: {directories}")
     return directories
 
-# 获取输入文件的basename（不带路径和扩展名）
-def get_sample_name(filepath):
+
+def get_sample_name(filepath, dt):
+    """
+    从文件路径中提取样本名，基于数据类型（单端或双端）。
+    """
     try:
-        dt = config.get("dt")
         if dt == "PE":
             return filepath.split("/")[-1].replace("_1.fastq.gz", "").replace("_2.fastq.gz", "")
         elif dt == "SE":
@@ -25,12 +26,24 @@ def get_sample_name(filepath):
     except Exception as e:
         raise ValueError(f"Error in get_sample_name for {filepath}: {e}")
 
-def get_all(directories, samples):
+
+def get_sample_list(config):
+    """
+    从配置文件中提取样本列表。
+    """
+    dt = config.get("dt")
+    reads = config.get("reads", [])
+    samples = {get_sample_name(read["read1"], dt) for read in reads}
+    samples_list = list(samples)
+    # 打印调试信息
+    print("Samples:", samples_list)
+    return samples_list
+
+
+def get_all_targets(directories, samples, dt):
     """
     根据配置生成所有需要的目标文件路径列表。
     """
-    dt = config.get("dt")
-
     all_targets = []
 
     if dt == "PE":
@@ -65,13 +78,12 @@ def get_all(directories, samples):
             dedu_out=directories["dedu_out"],
             sample=samples
         )
+    else:
+        raise ValueError(f"Unsupported 'dt': {dt}")
 
     # 打印调试信息
     print(f"Generated targets for dt={dt}: {all_targets}")
-
     return all_targets
-
-
 
 
 # Create input file list based on configuration

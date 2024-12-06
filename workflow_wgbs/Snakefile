@@ -8,18 +8,7 @@ include: "rules/common.smk"
 print(f"Config: {config}")
 
 directories = get_directories(config)
-print("directories:",directories)
-
-reads = config.get("reads",[])
-samples = set(get_sample_name(read["read1"]) for read in reads)
-samples = list(samples)
-
-print("Samples:",samples)
-
-# 创建目录
-for directory in directories.values():
-    os.makedirs(directory, exist_ok=True)
-
+samples = get_sample_list(config)
 
 rule all:
     input:
