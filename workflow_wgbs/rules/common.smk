@@ -4,15 +4,10 @@ def get_directories(config):
     """
     work_dir = config["work_dir"]
 
-    # 使用 Python 字符串格式化来获取目录
+    # 拼接路径
     directories = {
-        "sra_dir": config["directories"]["sra_dir"].format(work_dir=work_dir),
-        "trim_out": config["directories"]["trim_out"].format(work_dir=work_dir),
-        "clean_out": config["directories"]["clean_out"].format(work_dir=work_dir),
-        "bis_out": config["directories"]["bis_out"].format(work_dir=work_dir),
-        "dedu_out": config["directories"]["dedu_out"].format(work_dir=work_dir),
-        "extract_out": config["directories"]["extract_out"].format(work_dir=work_dir),
-        "log_out": config["directories"]["log_out"].format(work_dir=work_dir),
+        key: value.format(work_dir=work_dir) if "{work_dir}" in value else value
+        for key, value in config["directories"].items()
     }
 
     return directories
@@ -29,6 +24,54 @@ def get_sample_name(filepath):
             raise ValueError(f"Unsupported 'dt': {dt}")
     except Exception as e:
         raise ValueError(f"Error in get_sample_name for {filepath}: {e}")
+
+def get_all(directories, samples):
+    """
+    根据配置生成所有需要的目标文件路径列表。
+    """
+    dt = config.get("dt")
+
+    all_targets = []
+
+    if dt == "PE":
+        all_targets += expand(
+            "{extract_out}/{sample}/{sample}_1_val_1_bismark_bt2_pe.deduplicated.bedGraph.gz",
+            extract_out=directories["extract_out"],
+            sample=samples
+        )
+        all_targets += expand(
+            "{bis_out}/{sample}_1_val_1_bismark_bt2_pe.bam",
+            bis_out=directories["bis_out"],
+            sample=samples
+        )
+        all_targets += expand(
+            "{dedu_out}/{sample}_1_val_1_bismark_bt2_pe.deduplicated.bam",
+            dedu_out=directories["dedu_out"],
+            sample=samples
+        )
+    elif dt == "SE":
+        all_targets += expand(
+            "{extract_out}/{sample}/{sample}_trimmed_bismark_bt2_se.deduplicated.bedGraph.gz",
+            extract_out=directories["extract_out"],
+            sample=samples
+        )
+        all_targets += expand(
+            "{bis_out}/{sample}_trimmed_bismark_bt2_se.bam",
+            bis_out=directories["bis_out"],
+            sample=samples
+        )
+        all_targets += expand(
+            "{dedu_out}/{sample}_trimmed_bismark_bt2_se.deduplicated.bam",
+            dedu_out=directories["dedu_out"],
+            sample=samples
+        )
+
+    # 打印调试信息
+    print(f"Generated targets for dt={dt}: {all_targets}")
+
+    return all_targets
+
+
 
 
 # Create input file list based on configuration
@@ -56,11 +99,11 @@ def get_trimmed_list(wildcards):
 
 def get_cutted_list(wildcards):
     if config["dt"] == "SE":
-        return f"{directories['cut_out']}/{wildcards.sample}.fq.gz"
+        return f"{directories['clean_out']}/{wildcards.sample}.fq.gz"
     elif config["dt"] == "PE":
         return [
-            f"{directories['cut_out']}/{wildcards.sample}_1.fq.gz",
-            f"{directories['cut_out']}/{wildcards.sample}_1.fq.gz"
+            f"{directories['clean_out']}/{wildcards.sample}_1.fq.gz",
+            f"{directories['clean_out']}/{wildcards.sample}_1.fq.gz"
         ]
     else:
         raise ValueError(f"Invalid 'dt' configuration: {config['dt']}")

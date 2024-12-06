@@ -51,8 +51,7 @@ snakemake \
     --jobs 4 \
     --use-conda \
     --group-components processing=4 \
-    --config fq_dir="$fq_dir" work_dir="$work_dir" \
-    --config dt="PE" reads="$json_output_pe"
+    --config fq_dir="$fq_dir" work_dir="$work_dir" dt="PE" reads="$json_output_pe"
 
 # 运行 Snakemake 工作流（单端数据）- 使用 -np 模式
 echo "运行 Snakemake 处理单端数据（仅预览）..."

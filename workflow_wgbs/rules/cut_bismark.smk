@@ -17,7 +17,7 @@ rule cut:
     params:
         options_pe = config["cutadapt"]["pe"],
         options_se = config["cutadapt"]["se"],
-        cut_out = directories["cut_out"]
+        cut_out = directories["clean_out"]
     shell:
         """
         if [ "{config[dt]}" == "SE" ]; then
@@ -42,14 +42,15 @@ rule bismark:
         config["conda_env"]
     group: "processing_group"
     params:
-        genome = config["bismark_index"],
+        option = config["bismark"]["params"],
+        genome = config["bismark"]["index"],
         bis_out = directories["bis_out"],
-        strategy = config["strategy"]
+        strategy = config["bismark"]["strategy"]
     shell:
         """
         if [ "{config[dt]}" == "SE" ]; then
-            bismark {params.option} --genome {params.genome} {input.cutted_read} -o {params.bis_out}
+            bismark {params.option} {params.strategy} --genome {params.genome} {input.cutted_read} -o {params.bis_out}
         else
-            bismark {params.option} --genome {params.genome} -1 {input.cutted_read[0]} -2 {input.cutted_read[1]} -o {params.bis_out}
+            bismark {params.option} {params.strategy} --genome {params.genome} -1 {input.cutted_read[0]} -2 {input.cutted_read[1]} -o {params.bis_out}
         fi
         """

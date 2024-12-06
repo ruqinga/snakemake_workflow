@@ -5,6 +5,8 @@ configfile: "config.yaml"
 include: "rules/common.smk"
 
 # 获取全局参数
+print(f"Config: {config}")
+
 directories = get_directories(config)
 print("directories:",directories)
 
@@ -21,11 +23,7 @@ for directory in directories.values():
 
 rule all:
     input:
-        expand(
-            "{extract_out}/{sample}/{sample}_1_val_1_bismark_bt2_pe.deduplicated.bedGraph.gz",
-            extract_out=directories["extract_out"],
-            sample=samples
-        )
+        get_all(directories, samples)
 
 
 #load rules
