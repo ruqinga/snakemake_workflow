@@ -40,18 +40,14 @@ def get_sample_list(config):
     return samples_list
 
 
-def get_all_targets(directories, samples, dt):
+def get_all(directories, samples):
     """
     根据配置生成所有需要的目标文件路径列表。
     """
+    dt = config.get("dt")
     all_targets = []
 
     if dt == "PE":
-        all_targets += expand(
-            "{extract_out}/{sample}/{sample}_1_val_1_bismark_bt2_pe.deduplicated.bedGraph.gz",
-            extract_out=directories["extract_out"],
-            sample=samples
-        )
         all_targets += expand(
             "{bis_out}/{sample}_1_val_1_bismark_bt2_pe.bam",
             bis_out=directories["bis_out"],
@@ -62,10 +58,15 @@ def get_all_targets(directories, samples, dt):
             dedu_out=directories["dedu_out"],
             sample=samples
         )
+        all_targets += expand(
+            "{extract_out}/{sample}/{sample}_1_val_1_bismark_bt2_pe.deduplicated.bedGraph.gz",
+            extract_out=directories["extract_out"],
+            sample=samples
+        )
     elif dt == "SE":
         all_targets += expand(
-            "{extract_out}/{sample}/{sample}_trimmed_bismark_bt2_se.deduplicated.bedGraph.gz",
-            extract_out=directories["extract_out"],
+            "{clean_out}/{sample}.fq.gz",
+            clean_out=directories["clean_out"],
             sample=samples
         )
         all_targets += expand(
@@ -78,6 +79,13 @@ def get_all_targets(directories, samples, dt):
             dedu_out=directories["dedu_out"],
             sample=samples
         )
+        all_targets += expand(
+            "{extract_out}/{sample}/{sample}_trimmed_bismark_bt2_se.deduplicated.bedGraph.gz",
+            extract_out=directories["extract_out"],
+            sample=samples
+        )
+
+
     else:
         raise ValueError(f"Unsupported 'dt': {dt}")
 

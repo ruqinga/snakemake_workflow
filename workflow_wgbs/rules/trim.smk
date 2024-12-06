@@ -4,7 +4,7 @@ rule trim:
         read =  get_fq_list
     output:
         trimmed_read = (
-            "{trim_out}/{sample}_trimmed.fastq.gz"
+            "{trim_out}/{sample}_trimmed.fq.gz"
             if config["dt"] == "SE"
             else [
                 "{trim_out}/{sample}_1_val_1.fq.gz",

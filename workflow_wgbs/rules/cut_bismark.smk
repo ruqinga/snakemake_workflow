@@ -53,4 +53,5 @@ rule bismark:
         else
             bismark {params.option} {params.strategy} --genome {params.genome} -1 {input.cutted_read[0]} -2 {input.cutted_read[1]} -o {params.bis_out}
         fi
+
         """

@@ -15,42 +15,29 @@ source ~/.bashrc
 conda activate snakemake_env
 
 # 调用脚本生成单端和双端数据列表
-bash ./scripts/get_SE_PE_list.sh "$work_dir"
+json_output_se=$(python ./scripts/generate_json.py "$fq_dir" | awk '/^Single End JSON:/ {flag=1; next} /^Paired End JSON:/ {flag=0} flag {print}')
+json_output_pe=$(python ./scripts/generate_json.py "$fq_dir" | awk '/^Paired End JSON:/ {flag=1; next} flag {print}')
 
-# 初始化变量以记录是否需要运行单端或双端数据
-run_pe=false
-run_se=false
-
-# 检查并显示生成的 JSON 文件
-if [[ -f paired_end.json && -s paired_end.json ]]; then
-    echo "即将处理如下双端数据："
-    cat paired_end.json
-    json_output_pe=$(cat paired_end.json)
-    run_pe=true
+# 检查 JSON 数据是否为空并输出相应的提示信息
+if [[ -z "$json_output_se" || "$json_output_se" == "[]" ]]; then
+    echo "没有单端数据"
+    json_output_se=""
 else
-    echo "未检测到双端数据或文件为空"
-    json_output_pe="[]"
+    echo "即将处理如下单端数据:"
+    echo "$json_output_se"
 fi
 
-if [[ -f single_end.json && -s single_end.json ]]; then
-    echo "即将处理如下单端数据："
-    cat single_end.json
-    json_output_se=$(cat single_end.json)
-    run_se=true
+if [[ -z "$json_output_pe" || "$json_output_pe" == "[]" ]]; then
+    echo "没有双端数据"
+    json_output_pe=""
 else
-    echo "未检测到单端数据或文件为空"
-    json_output_se="[]"
+    echo "即将处理如下双端数据:"
+    echo "$json_output_pe"
 fi
 
-# 提示是否确认执行任务
-read -p "是否确认运行 Snakemake 流程（预览模式）？(y/n): " confirm_preview
-if [[ "$confirm_preview" != "y" && "$confirm_preview" != "Y" ]]; then
-    echo "任务已取消！"
-    exit 0
-fi
 
 # 运行 Snakemake 工作流（预览模式）
-if [[ "$run_pe" == true ]]; then
+if [[ -n "$json_output_pe" ]]; then
     echo "运行 Snakemake 处理双端数据（仅预览）..."
     snakemake \
         -np \
@@ -63,7 +50,7 @@ if [[ "$run_pe" == true ]]; then
         --config fq_dir="$fq_dir" work_dir="$work_dir" dt="PE" reads="$json_output_pe"
 fi
 
-if [[ "$run_se" == true ]]; then
+if [[ -n "$json_output_se" ]]; then
     echo "运行 Snakemake 处理单端数据（仅预览）..."
     snakemake \
         -np \
@@ -84,7 +71,7 @@ if [[ "$confirm_run" != "y" && "$confirm_run" != "Y" ]]; then
 fi
 
 # 实际运行 Snakemake 工作流
-if [[ "$run_pe" == true ]]; then
+if [[ -n "$json_output_pe" ]]; then
     echo "开始处理双端数据..."
     snakemake \
         --executor cluster-generic \
@@ -96,7 +83,7 @@ if [[ "$run_pe" == true ]]; then
         --config fq_dir="$fq_dir" work_dir="$work_dir" dt="PE" reads="$json_output_pe"
 fi
 
-if [[ "$run_se" == true ]]; then
+if [[ -n "$json_output_se" ]]; then
     echo "开始处理单端数据..."
     snakemake \
         --executor cluster-generic \
