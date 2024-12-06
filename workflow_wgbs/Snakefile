@@ -1,0 +1,36 @@
+import os
+
+configfile: "config.yaml"
+
+include: "rules/common.smk"
+
+# 获取全局参数
+directories = get_directories(config)
+print("directories:",directories)
+
+reads = config.get("reads",[])
+samples = set(get_sample_name(read["read1"]) for read in reads)
+samples = list(samples)
+
+print("Samples:",samples)
+
+# 创建目录
+for directory in directories.values():
+    os.makedirs(directory, exist_ok=True)
+
+
+rule all:
+    input:
+        expand(
+            "{extract_out}/{sample}/{sample}_1_val_1_bismark_bt2_pe.deduplicated.bedGraph.gz",
+            extract_out=directories["extract_out"],
+            sample=samples
+        )
+
+
+#load rules
+include: "rules/trim.smk"
+include: "rules/cut_bismark.smk" # 处理我们的数据
+#include: "rules/bismark.smk" # 处理公开数据
+include: "rules/deduplicate.smk" # 去重，无法修改去重阈值
+include: "rules/extract.smk" # 提取甲基化信息
