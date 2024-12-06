@@ -15,8 +15,8 @@ source ~/.bashrc
 conda activate snakemake_env
 
 # 调用脚本生成单端和双端数据列表
-json_output_se=$(python ./scripts/generate_json.py "$fq_dir" | awk '/^Single End JSON:/ {flag=1; next} /^Paired End JSON:/ {flag=0} flag {print}')
-json_output_pe=$(python ./scripts/generate_json.py "$fq_dir" | awk '/^Paired End JSON:/ {flag=1; next} flag {print}')
+json_output_se=$(python ./scripts/get_SE_PE_json.py "$fq_dir" | awk '/^Single End JSON:/ {flag=1; next} /^Paired End JSON:/ {flag=0} flag {print}')
+json_output_pe=$(python ./scripts/get_SE_PE_json.py "$fq_dir" | awk '/^Paired End JSON:/ {flag=1; next} flag {print}')
 
 # 检查 JSON 数据是否为空并输出相应的提示信息
 if [[ -z "$json_output_se" || "$json_output_se" == "[]" ]]; then
