@@ -4,11 +4,11 @@ rule cut:
         trimmed_read = get_trimmed_list
     output:
         cutted_read = (
-            "{cut_out}/{sample}.fq.gz"
+            "{clean_out}/cut/{sample}_trimmed.fq.gz"
             if config["dt"] == "SE"
             else [
-                "{cut_out}/{sample}_1.fq.gz",
-                "{cut_out}/{sample}_2.fq.gz"
+                "{clean_out}/cut/{sample}_1_val_1.fq.gz",
+                "{clean_out}/cut/{sample}_2_val_2.fq.gz"
             ]
         )
     conda:
@@ -17,7 +17,7 @@ rule cut:
     params:
         options_pe = config["cutadapt"]["pe"],
         options_se = config["cutadapt"]["se"],
-        cut_out = directories["clean_out"]
+        clean_out = directories["clean_out"]
     shell:
         """
         if [ "{config[dt]}" == "SE" ]; then

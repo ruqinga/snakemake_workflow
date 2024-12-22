@@ -49,6 +49,16 @@ def get_all(directories, samples):
 
     if dt == "PE":
         all_targets += expand(
+            "{clean_out}/trim_galore/{sample}_1_val_1.fq.gz",
+            clean_out=directories["clean_out"],
+            sample=samples
+        )
+        all_targets += expand(
+            "{clean_out}/cut/{sample}_1_val_1.fq.gz",
+            clean_out=directories["clean_out"],
+            sample=samples
+        )
+        all_targets += expand(
             "{bis_out}/{sample}_1_val_1_bismark_bt2_pe.bam",
             bis_out=directories["bis_out"],
             sample=samples
@@ -63,6 +73,7 @@ def get_all(directories, samples):
             extract_out=directories["extract_out"],
             sample=samples
         )
+
     elif dt == "SE":
         all_targets += expand(
             "{clean_out}/{sample}.fq.gz",
@@ -119,11 +130,11 @@ def get_trimmed_list(wildcards):
 
 def get_cutted_list(wildcards):
     if config["dt"] == "SE":
-        return f"{directories['clean_out']}/{wildcards.sample}.fq.gz"
+        return f"{directories['clean_out']}/cut/{wildcards.sample}_trimmed.fq.gz"
     elif config["dt"] == "PE":
         return [
-            f"{directories['clean_out']}/{wildcards.sample}_1.fq.gz",
-            f"{directories['clean_out']}/{wildcards.sample}_1.fq.gz"
+            f"{directories['clean_out']}/cut/{wildcards.sample}_1_val_1.fq.gz",
+            f"{directories['clean_out']}/cut/{wildcards.sample}_2_val_2.fq.gz"
         ]
     else:
         raise ValueError(f"Invalid 'dt' configuration: {config['dt']}")

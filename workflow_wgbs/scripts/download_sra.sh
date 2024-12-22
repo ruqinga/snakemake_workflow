@@ -23,7 +23,7 @@ awk -F'\t' 'NR==1 {for (i=1; i<=NF; i++) if ($i=="run_accession") col=i} NR>1 {p
 # 下载 SRA 文件
 echo "准备下载以下数据:"
 cat sralist.txt
-prefetch -O . $(<sralist.txt)
+prefetch --max-size 100G  -O "$output_dir" $(<sralist.txt)
 
 # 校验 MD5
 echo "开始 MD5 校验..."
