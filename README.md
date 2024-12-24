@@ -11,7 +11,15 @@
 bash run.sh <work_dir> <fq_dir> -y
 ```
 
-通过如下三步即可部署成功：
+![image-20241224164713387](https://raw.githubusercontent.com/ruqinga/picture/main/2024/image-20241224164713387.png)
+
+确定没问题则通过nohup提交
+
+```sh
+nohup bash run.sh <work_dir> <fq_dir> -y &
+```
+
+通过简单三步即可部署成功：
 
 ### Step1: install snakemake
 
