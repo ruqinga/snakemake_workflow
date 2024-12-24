@@ -68,7 +68,7 @@ if [[ -n "$json_output_pe" ]]; then
     snakemake \
         -np \
         --executor cluster-generic \
-        --cluster-generic-submit-cmd 'qsub -q slst_pub -N rna_pe.pbs -l nodes=1:ppn=4' \
+        --cluster-generic-submit-cmd 'qsub -q slst_pub -N rna_pe.pbs -l nodes=1:ppn=20' \
         --latency-wait 60 \
         --jobs 4 \
         --use-conda \
@@ -81,7 +81,7 @@ if [[ -n "$json_output_se" ]]; then
     snakemake \
         -np \
         --executor cluster-generic \
-        --cluster-generic-submit-cmd 'qsub -q slst_pub -N rna_se.pbs -l nodes=1:ppn=4' \
+        --cluster-generic-submit-cmd 'qsub -q slst_pub -N rna_se.pbs -l nodes=1:ppn=20' \
         --latency-wait 60 \
         --jobs 4 \
         --use-conda \
@@ -107,7 +107,7 @@ if [[ -n "$json_output_pe" ]]; then
     echo "开始处理双端数据..."
     snakemake \
         --executor cluster-generic \
-        --cluster-generic-submit-cmd 'qsub -q slst_pub -N rna_pe.pbs -l nodes=1:ppn=4' \
+        --cluster-generic-submit-cmd 'qsub -q slst_pub -N rna_pe.pbs -l nodes=1:ppn=20' \
         --latency-wait 60 \
         --jobs 4 \
         --use-conda \
@@ -119,7 +119,7 @@ if [[ -n "$json_output_se" ]]; then
     echo "开始处理单端数据..."
     snakemake \
         --executor cluster-generic \
-        --cluster-generic-submit-cmd 'qsub -q slst_pub -N rna_se.pbs -l nodes=1:ppn=4' \
+        --cluster-generic-submit-cmd 'qsub -q slst_pub -N rna_se.pbs -l nodes=1:ppn=20' \
         --latency-wait 60 \
         --jobs 4 \
         --use-conda \
