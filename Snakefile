@@ -4,8 +4,6 @@ configfile: "config.yaml"
 
 include: "rules/common.smk"
 
-# 通配符约束
-
 # 获取全局参数
 print(f"Config: {config}")
 
@@ -19,8 +17,8 @@ rule all:
 
 #load rules
 include: "rules/trim.smk"
-include: "rules/cut_bismark.smk" # 处理我们的数据
-#include: "rules/bismark.smk" # 处理公开数据
+#include: "rules/cut_bismark.smk" # 处理我们的数据
+include: "rules/bismark.smk" # 处理公开数据
 include: "rules/deduplicate.smk" # 去重，无法修改去重阈值
 include: "rules/extract.smk" # 提取甲基化信息
 

@@ -2,11 +2,13 @@ fq_dir: ""
 work_dir: ""
 
 # Input Reads
-dt: "PE" # datatype = SE or PE
+dt: "" # datatype = SE or PE
 
 reads:
   - read1: " "  # Provide read1 file path
     read2: " "  # Provide read2 file path if PE, else leave empty
+
+#### 上面部分会通过run.sh提供，只用修改下面的部分 ####
 
 # Environment
 conda_env: "base-omics"
